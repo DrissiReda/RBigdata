@@ -1,0 +1,89 @@
+\documentclass{report}
+\usepackage[utf8]{inputenc}
+\usepackage[francais]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{textcomp}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage{multirow}
+\setcounter{tocdepth}{5}
+\setcounter{secnumdepth}{4}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\definecolor{gray}{rgb}{0.4,0.4,0.4}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\titleformat{\paragraph}
+{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+\renewcommand{\thesection}{\Roman{section}}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,
+    urlcolor=cyan,
+}
+\lstnewenvironment{cc}
+{
+\lstset{frame=tblr,
+  language=C,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}}
+{}
+
+\begin{document}
+\title{
+  \begin{minipage}\linewidth
+      \centering
+      \includegraphics[width=40mm]{resources/01.png}\vskip 20pt
+      R
+      \vskip 5pt
+      \author{
+        DRISSI Mohamed Reda \\
+        \texttt{reda-mohamed@isty.uvsq.fr}
+      }
+    \end{minipage}
+}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+\section{Introduction}
+\section{Analyse factorielle}
+Pour mieux classifier les données, et pour mieux remarquer la comparaison entre 2 variables qualitatives, nous
+allons utiliser des quintiles.
+\begin{verbatim}
+  dfs$quintile<-5-(rank(dfs$public)-1)%/%(dim(dfs)[1]/5)
+\end{verbatim}
+Nous divisons les classements des films en 5 quintiles :
+\begin{enumerate}
+  \item Très bons
+  \item Bon
+  \item Moyen
+  \item Pas bon
+  \item Mauvais
+\end{enumerate}
+Pour génèrer la table de contingence avec deux variables qualitatives ce qui permet d'observer les
+rapports entre les deux variables.
+Test du $X^2$ : Permet de voir si les deux variables sont indépendante (retourne nul) ou pas
+(retourne une valeur non nul et pas proche de 0)
+\end{document}
