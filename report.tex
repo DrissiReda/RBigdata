@@ -2,6 +2,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[francais]{babel}
 \usepackage[T1]{fontenc}
+\usepackage[none]{hyphenat}
 \usepackage{lmodern}
 \usepackage{textcomp}
 \usepackage{listings}
@@ -23,6 +24,10 @@
 {\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
 \titlespacing*{\paragraph}
 {0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+\newcommand{\photo}[1]{\\
+    \includegraphics[scale=0.5]{resources/#1.png}
+\\
+}
 \renewcommand{\thesection}{\Roman{section}}
 \hypersetup{
     colorlinks=true,
@@ -55,7 +60,7 @@
   \begin{minipage}\linewidth
       \centering
       \includegraphics[width=40mm]{resources/01.png}\vskip 20pt
-      R
+      \Huge Big Data \\ Étude de données en R
       \vskip 5pt
       \author{
         DRISSI Mohamed Reda \\
@@ -68,22 +73,206 @@
 \tableofcontents
 \newpage
 \section{Introduction}
-\section{Analyse factorielle}
+Pour cette étude, nous avons utilisés les données fournies qui ont été extraites depuis le site
+d’Allociné. Ce dernier contient de nombreux films sortis au cinéma, ainsi que leurs critiques. De notre côté,
+nous extrayons plusieurs films et leur données sorti depuis 2017 à ce jour. Les colonnes de nos données
+sont classées de la manière suivante :
+\begin{itemize}
+  \item Le jour de sortie (jour/mois/année)
+  \item La nationalité
+  \item Le genre
+  \item La durée du film
+  \item Le nombre de fois où le film a eu $n$ étoiles (tel que $n \in [0,5]$)
+  \item La note de presse (une presse par colonne)
+  \item La note du public
+\end{itemize}
+\section{Analyse en composantes principales}
+\subsection{La presse}
+Le but de cette analyse est de déterminer ce qui a influencé la presse à donner une note ou une autre à un
+certain film. Afin d'avoir des résultats aussi précis que possible nous allons nous limiter aux grandes presses
+(i.e les presses qui ont noté le plus de films). Nous trouvons donc :
+\begin{itemize}
+  \item Télérama
+  \item Les fiches du cinéma
+  \item Le Monde
+  \item Le Dauphin Libéré
+  \item Le Parisien
+  \item Libération
+  \item La croix
+  \item L'humanité
+\end{itemize}
+Nous utilisons donc la commande :
+\begin{verbatim}
+    acp1<-prcomp(~.,dfs[ ,c(14:16,18,21,24,27,29,31)],scale=TRUE)
+\end{verbatim}
+Les colonnes dans c() correspondent aux journaux, cette commande permet de traiter les journaux cités.
+La commande prcomp permet d'effectuer une analyse en composantes principales en utilisants le SVD (singular value
+decomposition).\\
+Nous pouvons utiliser \texttt{summary(acp1)} pour avoir un résumé de la sortie de \texttt{prcomp}.\\
+
+La proportion de la variance de la composante 1 représente 30\% de la variance totale. Si nous prenons les 4
+premières composantes nous regroupons 70\% de la variance. Donc nous pouvons ignorer le reste, en effet
+la variance cumulative sert à repérer les composantes qui sont susceptibles d'affecter nos résultats.
+\photo{10}
+\begin{verbatim}
+  cor(dfs[rownames(acp1$x),c(14:16,18,21,24,27,29,31)])
+\end{verbatim}
+Cette commande donne une idée sur la corrélation entre les notes du films donnés par les journaux. Nous
+remarquons qu'en moyenne les avis des journaux convergent.
+\begin{verbatim}
+  acp1$rotation%*%diag(acp1$sdev^2)%*%t(acp1$rotation)
+\end{verbatim}
+Ce calcul est pratiquement celui d'une diagonalisation $P*D*P^{-1}$ puisque notre matrice de rotation est
+symétrique par rapport à la diagonale, nous avons $P^{-1}=P^T$. \\
+Nous trouvons ce résultat :
+\photo{11}
+Pour afficher nos mesures sur un graphique nous allons utiliser la fonction \texttt{biplot} :
+\photo{12}
+En effet d'après le graphique, nous remarquons que les avis convergent en moyenne, les bons films sont sur la moitié droite
+(en majorité) et les mauvais films sont sur la moitié gauche.\\
+L'axe rouge représente l'orientation politique des critiques, nous savons que Le Monde ou Télérama sont
+des journaux de gauche, tandis que le PArisien et le Figaro sont des journaux de droite.
+Puisque nous trouvons la droite vers le haut et la gauche vers le bas, nous constatons qu'il existe des bons
+films pour la droite ou pour la gauche.\\
+En effectuant \texttt{biplot(acp1, choices=c(1,3))} nous observons un 3ème axe qui oppose Télérama et Les fiches du cinéma.
+Nous remarquons que Télérama et les Fiches du Cinéma ne sont pas d'accord sur la qualité des films, qu'importe ce que
+les autres journaux pensent.
+\photo{13}
+\subsection{Les spectateurs}
+Pour déterminer la corrélation entre les spectateurs et les notes de presses traitées précédemment nous utilisons
+cette commande :
+\begin{verbatim}
+  cor(dfs[rownames(acp1$x),"public"],acp1$x)
+\end{verbatim}
+Les composantes résultantes sont :
+\photo{14}
+La corrélation est assez faible sur la première composante qui correspond à la qualité inhérente du film.
+Donc la presse et les spectateurs ne sont pas d'accord sur la note de ce film. La composante PC2 correspondante
+à l'orientation politique a la valeur maximale, ce qui est normal puisque les presse de ``droite`` seront
+du même avis que les spectateurs de droite.
+Pour afficher une 3ème variable sur notre schéma de critiques en focntion des films (critique des spectateurs)
+Nous allons utiliser cette fonction :
+\begin{verbatim}
+  fleche<-function(nom,axes=c(1,2)){
+    coord<-cov(dfs[rownames(acp1$x),nom],acp1$x)
+    arrows(0,0,coord[axes[1]]*acp1$sdev[1],coord[axes[2]]*acp1$sdev[2]*5,
+      col="blue")
+    sum (coord^2)
+}
+\end{verbatim}
+Le graphique résultant est :
+\photo{15}
+Nous trouvons donc que le public se range du côté des journaux de droite, cela nous amène à conclure
+que le public est plus de ``droite``.
+\newpage
+\section{Analyse factorielle des composantes}
+\subsection{Analyse des nationalités}
 Pour mieux classifier les données, et pour mieux remarquer la comparaison entre 2 variables qualitatives, nous
 allons utiliser des quintiles.
+
 \begin{verbatim}
-  dfs$quintile<-5-(rank(dfs$public)-1)%/%(dim(dfs)[1]/5)
+  dfs$quintile<-5-(rank(dfs$public,useNA="no")-1)%/%(dim(dfs)[1]/5)
 \end{verbatim}
 Nous divisons les classements des films en 5 quintiles :
 \begin{enumerate}
-  \item Très bons
-  \item Bon
-  \item Moyen
-  \item Pas bon
   \item Mauvais
+  \item Pas bon
+  \item Moyen
+  \item Bon
+  \item Très bons
 \end{enumerate}
+Le résultat de \texttt{dfs\$quintile} donne :
+\photo{30}
 Pour génèrer la table de contingence avec deux variables qualitatives ce qui permet d'observer les
-rapports entre les deux variables.
-Test du $X^2$ : Permet de voir si les deux variables sont indépendante (retourne nul) ou pas
-(retourne une valeur non nul et pas proche de 0)
+rapports entre les deux variables, nous utilisons cette commande.
+\begin{verbatim}
+  tab<-table(dfs$nat2,dfs$quintile)
+\end{verbatim}
+Nous trouvons :
+\photo{31}
+De première vue nous avons déjà une certaine idée de la qualité des films selon leurs nationalités.
+Par exemple les films américains sont peu présent dans le premier rang (mauvais films), et les français
+ont plein de films dans le plus de films dans les 2 premiers quintiles. Cette analyse va nous permettre
+d'essayer de comprendre la raison.
+Test du $\chi^2$ : Permet de voir si les deux variables sont indépendantes (p-value <0.05) ou pas
+(retourne une valeur >0.05). En effet nos 2 variables ne sont pas indépendantes puisque
+la commande \texttt{chisq.test(tab)} retourne un $p-value=7.065\times10^{-9}$
+comme le montre la capture d'écran :
+\photo{32}
+Pour effectuer notre analyse factorielle des correspondances nous utilisons la commande \texttt{afc<-CA(tab)}
+\photo{33}
+Chaque nationalité forme un groupe de films distincts. Nous remarquons comme précédemment vu sur le
+tableau de contingence que les américans ont plus de bons films, tandis que les français ont plus
+de mauvais films, les films de nationalité différentes des 2 précédentes sont moyens.
+Nous savons que notre tableau est cohérent car la somme des 2 dimensions est de $100\%$ .
+
+Pour davantage de clarité nous allons pondérer les nationalités en fonction des quintiles,
+Cela va nous donner les coordonnées des profils lignes à l’intérieur des profils colonnes
+Pour afficher notre résultat :
+\begin{verbatim}
+  res<-tab%*%afc$col$coord/apply(tab,1,sum)
+  (afc$col$coord[ ,c(1,2)])
+  points(res,col="blue"). #ajout du résultat de la première commande dans le plot
+\end{verbatim}
+Le graphique résultant :
+\photo{34}
+Grâce à cette pondération, notre graphique offre davantage d'information sur la proximité entre
+les nationalités et leurs quintiles ``chauds``.
+\begin{itemize}
+  \item Américains : entre les quintiles 4 et 5
+  \item Français : entre les quintiles 1 et 2
+  \item Autres : entre les quintiles 2 et 4
+\end{itemize}
+Nous observons les ellipses correspondantes aux intervalles de confiance. Ce sont les ellipsoïdes
+de confiance pour chacun des points.
+Nous utilisons la commande \texttt{ellipseCA()} :
+\photo{36}
+Nous remarquons que la modalité des films américains est très différente des autres, D'une autre
+part les modalités des films français et de nationalité autre ont des ellipsoïdes qui s'interceptent,
+cependant nous ne pouvons pas supposer qu'ils sont confondus, ni supposer qu'ils sont séparés
+statistiquement. Les films du 1er quintiles sont aussi suffisament loins des ellipsoïdes des nationalités
+pour supposer qu'ils sont d'une nationalité différente du reste.
+\subparagraph{Conclusion} \begin{verbatim}\end{verbatim}
+Il y a pleins de bons films américains et pleins de mauvais films français, ce qui est normal,
+puisque les salles françaises ne vont jamais investir dans de mauvais films américains, ce qui
+justifie l'absence de ces derniers dans notre échantillon. Par contre les films français, bons ou
+mauvais seront forcèment visualisés en france (local) puisque comme les films américains, ils n'auront
+aucun succès et aucune attirance pour des salles internationales.
+\subsection{Analyse des genres}
+De même nous allons observer la table de contingence entre les quintiles et les genre de films,
+nous commençons par créer cette table :
+\begin{verbatim}
+  tab2<-table(dfs$genre,dfs$quintile)
+\end{verbatim}
+Résultat :
+\photo{35}
+Nous remarquons que quelques genres ont très peu de films donc nous ne pouvons pas considérer
+ces films comme représentatifs de leurs genres, l'échantillon est trop petit et la probabilité que
+nos résultats soient faux est trop grande.
+Nous allons donc enlever ces genres avec la commande
+\begin{verbatim}
+  tab2mod <-tab2[-c(7,8,13,17,22),]
+\end{verbatim}
+Le test du $\chi^2$ génère un warning : Chi-squared approximation may be incorrect.\\
+Donc nous allons essayer avec l'option : \texttt{simulate.p.value = TRUE}
+Nous trouvons :
+\photo{37}
+La p-value est de  $0.0004998$ donc comme avec les nationalités, nous trouvons que nos 2 variables
+ne sont pas indépendantes.
+Nous effectuons l'analyse factorielle avec la commande \texttt{CA()} et nous trouvons :
+\photo{38}
+Comme avec les nationalités nous allons essayer de trouver les genres appréciés et ceux qui ne le
+sont pas.
+\begin{verbatim}
+  res2<-tab2mod%*%afc2$col$coord/apply(tab2mod,1,sum)
+  (afc2$col$coord[,c(1,2)])
+  points(res2,col="green")
+\end{verbatim}
+Le résultat :
+\photo{39}
+Nous remarquons que les films de guerre recouvrent complètement le quintile 4 donc ces films sont tous
+bons. Les filmes romantiques d'une autre part ont des qualités mixés puisqu'ils sont soit trop bons
+soit trop mauvais (quintile 1 et 5). Les films thrillers et science fiction  sont très présents dans
+les quintiles supérieurs ce qui veut dire qu'ils sont très appréciés par le public.
+
 \end{document}
