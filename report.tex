@@ -119,6 +119,8 @@ la variance cumulative sert à repérer les composantes qui sont susceptibles d'
 \end{verbatim}
 Cette commande donne une idée sur la corrélation entre les notes du films donnés par les journaux. Nous
 remarquons qu'en moyenne les avis des journaux convergent.
+Nous pouvons effectuer une rotation avec la commande \texttt{acp1\$rotation}, pour vérifier que c'est
+bien la matrice de rotation nous pouvons effectuer le calcul suivant :
 \begin{verbatim}
   acp1$rotation%*%diag(acp1$sdev^2)%*%t(acp1$rotation)
 \end{verbatim}
@@ -126,6 +128,10 @@ Ce calcul est pratiquement celui d'une diagonalisation $P*D*P^{-1}$ puisque notr
 symétrique par rapport à la diagonale, nous avons $P^{-1}=P^T$. \\
 Nous trouvons ce résultat :
 \photo{11}
+Nous pouvons aussi examiner l'écart-type avec la commande \texttt{acp1\$sdev} (standard deviation qui
+veut dire écart-type en anglais). Il est intéressant de regarder l'écart-type
+pour bien apercevoir la dispersion des données
+\photo{16}
 Pour afficher nos mesures sur un graphique nous allons utiliser la fonction \texttt{biplot} :
 \photo{12}
 En effet d'après le graphique, nous remarquons que les avis convergent en moyenne, les bons films sont sur la moitié droite
@@ -164,6 +170,34 @@ Le graphique résultant est :
 \photo{15}
 Nous trouvons donc que le public se range du côté des journaux de droite, cela nous amène à conclure
 que le public est plus de ``droite``.
+Avant d'effectuer notre analyse des composantes principales avec \texttt{PCA} nous allons compléter notre
+jeu de données à l'aide de cette commande :
+\begin{verbatim}
+  rescomp<-imputeFAMD(dfs[,c(5,14:31,95:97)],ncp=2)
+\end{verbatim}
+Puis nous pouvons utiliser la fonction \texttt{PCA}
+\begin{verbatim}
+  acp2<-PCA(rescomp$completeObs, quanti.sup=c(20,21), quali.sup=c(1,22))
+\end{verbatim}
+Le résultat est 2 diagrammes :
+\photo{17}
+Nous remarquons que quelques pleins n'appartiennent pas au nuage constituant la plupart des films.
+Ces points qui échappent à la règle sont les seuls de leur catégorie, donc nous ne pouvons pas
+les comparer aux autres catégories.
+\photo{18}
+Dans ce second diagramme, les flèches vont dans des directions similaires, ce qui veut dire que
+les avis convergent globalement
+Nous allons enlever les films excentrés du premier graphes, soit Un beau Soleil intérieur et Molly
+\photo{19}
+Après avoir récupéré les lignes Molly et Un beau Soleil intérieur, nous exécutons la commande :
+\begin{verbatim}
+  comp2<-PCA(rescomp$completeObs, ind.sup=c(742,54), quanti.sup=c(20,21), quali.sup=c(1,22))
+\end{verbatim}
+Individus :
+\photo{191}
+Variables : 
+\photo{192}
+Le deuxième graphe change légèrement au niveau du \textit{varpub}
 \newpage
 \section{Analyse factorielle des composantes}
 \subsection{Analyse des nationalités}
