@@ -72,12 +72,134 @@
 \newpage
 \tableofcontents
 \newpage
-\section{Introduction}
-Pour cette étude, nous avons utilisés les données fournies qui ont été extraites depuis le site
-d’Allociné. Ce dernier contient de nombreux films sortis au cinéma, ainsi que leurs critiques. De notre côté,
-nous extrayons plusieurs films et leur données sorti depuis 2017 à ce jour. Les colonnes de nos données
-sont classées de la manière suivante :
+\section{Regression linéaire }
+L'objectif de cette étude sera d'essayer de comprendre
+la manière dont laquelle se répartissent des tailles et poids d'un
+échantillon d'une population en fonction de leur sexe. Nous
+allons ensuite essayer de determiner l'existence ou l'absence
+d'une correlation entre les deux variables.
+Nous allons utilisés le fichier de données nommé \textit{Davis} qui
+contient des données sur 200 personnes.
+\subsection{Normalité}
+Afin que nos résultats aient un sens, nous devons vérifier
+que notre jeu de données passe des tests de normalités (i.e
+qu'il suit une loi normale).
+Les tests de normalité que nous allons utiliser sont :
+\subsubsection{Lilliefors}
+\begin{enumerate}
+  \item  Estimer la moyenne et la variance de la distribution en se basant sur les données.
+  \item Trouver le maximum de variance entre la fonction de répartition empirique et la fonction de répartition de la distribution normale d'espérance et de variance estimée en 1, comme dans le test de Kolmogorov-Smirnov
+  \item Enfin, estimer si le maximum de variance est assez grand pour être statistiquement significatif ce qui entraînerait le rejet de l'hypothèse nulle en fonction de la distribution de Lilliefors.
+\end{enumerate}
+\subsubsection{Anderson-Darling}
+La formule du test sera : $A^2=-n-S$
+tel que :
+\begin{displaymath}
+  S=\sum^n_{i=1}\frac{(2i-1)}{n}[ln(F(Y_i))+ln(1-F(Y_{n+1-i}))]
+\end{displaymath}
 \begin{itemize}
+  \item $F$ est la fonction de répartition de la distribution spécifiée
+  \item $Y_i$ sont les données triées
+\end{itemize}
+Nous utilisons ce résultat pour calculer la valeur critique
+selon des tableaux bien définis, puis nous calculons la p-value
+à l'aide d'autres tableaux,  (la table Stephens (1986). "Tests Based on EDF Statistics", )
+\\Cette p-value correspond à la probabilité d'obtenir une statistique aussi
+extrême que la valeur observée.
+\subsubsection{Shapiro-Wilk}
+La formule du test sera
+\begin{displaymath}
+  W=\frac{\sum^{n}_{i=1}\left(a_ix_{(i)} \right)^2}
+  {\sum^{n}_{i=1}\left(x_i-\bar{x}\right)}
+\end{displaymath}
+\begin{itemize}
+  \item $x_{(i)}$ (avec des parenthèses entourant l'indice i) désigne la ième statistique d'ordre, i.e.: le ième plus petit nombre dans l'échantillon
+  \item $\bar{x}=\frac{1}{n}(x_1+x_2+...+x_n)$ est la moyenne de l'échantillon.
+  \item la constante $a_i$ est donnée par
+  \begin{displaymath}
+    (a_1,....a_n)=\frac{m^TV^{-1}}{(m^TV^{-1}V^{-1}m)^{\frac{1}{2}}}
+  \end{displaymath}
+  où : $m=(m_1,...,m_n)^T$
+  \item $m_1,...,m_n$ sont les espérances des statistiques d'ordre d'un échantillon de variables indépendantes et identiquement distribuée suivant une loi normale
+  \item $V$ est la matrice de variance-covariance de ces statistiques d'ordre
+  \item Ensuite le résultat $W$ est comparé à une table pour
+  pouvoir trouver la p-value correspondante au niveau $\alpha$ choisi.
+\end{itemize}
+Les résultats de ces tests seront :
+\photo{20}
+Nous devons choisir arbitrairement un seuil $\alpha$ à partir duquel
+il n'y aurait pas de présomption de l'hypothèse nulle.
+Par convention ce seuil est fixé à $\alpha=0.1$. En tout cas
+nous avons des p-values très petite donc le seuil le choix
+du seuil aura peu d'impact.\\
+Ce résultat est inattendu pour ce jeu de données, nous
+vérifions cela en s'appyuant sur les histogrammes :
+\photo{21}
+\photo{22}
+Nous remarquons qu'il y a une valeur isolée pour chacun des
+histogrammes nous trouvons la cause :
+\photo{23}
+Ces valeurs ont été inversés, nous inversons ces valeurs puis
+nous faisons tourner les tests de normalités une nouvelle fois :
+\photo{24}
+Ces résultats sont déjà beaucoup plus adéquats qu'avant surtout
+pour le test Shapiro, néanmoins nous ne pouvons pas être
+certains du résultat encore, donc nous isolons les sexes
+pour chaque test :
+\photo{25}
+Nous regroupons les résultats dans un tableau pour plus de clarité
+\\\begin{tabular}{| c | c | c |}
+  \hline
+  \_\_\_\_ & \textbf{M} & \textbf{F} \\ \hline
+  Lilliefors & 0.38 & 0.18\\ \hline
+  Anderson-Darling & 0.71 & 0.38 \\ \hline
+  Shapiro & 0.87 & 0.51 \\ \hline
+\end{tabular}\\
+Nous avons finalement des valeurs significatives et satisfaisantes.
+Chaque résultat est au dessus de notre $\alpha$.\\
+Les résultats suivent une loi normale, donc n'ont pas été
+générés aléatoirement.
+\subsection{Modélisation linéaire}
+Puisque nos données suit une loi normale, nous pouvons modéliser
+une régression exprimée par un modèle linéaire, dans le but
+d'obtenir une idée sur la relation entre nos deux variables.\\
+La fonction de regression sera : \\
+$Y=AX+B+\mathcal{E}$ \\
+$\mathcal{E}$ représente l'erreur résiduelle, nos deux valeurs $A$ et $B$ sont
+les paramètres de notre droite.\\
+Nous allons utiliser la fonction \texttt{lm()} pour réaliser
+ce modèle linéaire. Le résultat obtenu sera :
+\photo{26}
+La valeur $R^2$ est un indicateur de la qualité de notre modèle.
+Sa valeur est proportionnelle avec la qualité du modèle (i.e $R^2$ élevé $\longrightarrow$ qualité élevée)
+Ici nous trouvons $R^2=0.59$.\\
+Pour de meilleurs résultats, nous allons séparer les sexes,
+ce qui est logique puisque le sexe est aussi un paramètre qui affecte
+le rapport entre la taille et le poids.
+\photo{27}
+ Nous remarquons une légère amélioration de qualité avec
+ $R^2=0.64$\\
+ Nous pouvons essayer d'améliorer encore plus notre modèle
+ avec l'équation : $Y=AX^3$ en mettant $B=0$ en plus de $\mathcal{E}$
+ Nous trouvons :
+ \photo{28}
+ Notre $R^2=0.98$ est d'une très bonne qualités, les données
+ utilisés sont très corrélées avec cette nouvelle formule.\\
+ Une représentation graphique à l'aide des commmandes :
+ \begin{verbatim}
+   plot(Davis$height,Davis$weight,xlim=c(140,200))
+   lines(c(0:200),c(0:200)^3*lin3$coefficients[1],type="l",col="green")
+   lines(c(0:200),c(0:200)^3*lin3$coefficients[2],type="l",col="blue")
+\end{verbatim}
+ Donne :
+ \photo{29}
+\section{Analyse en composantes principales}
+\subsection{Introduction}
+Pour cette étude, nous avons utilisés les données récupérées depuis le site
+d’Allociné. Ce dernier est constitués de films sortis au cinéma récemmment (2017-2018) ainsi que leurs critiques.
+Les colonnes de nos données sont classées de la manière suivante :
+\begin{itemize}
+  \item nom du film
   \item Le jour de sortie (jour/mois/année)
   \item La nationalité
   \item Le genre
@@ -86,7 +208,6 @@ sont classées de la manière suivante :
   \item La note de presse (une presse par colonne)
   \item La note du public
 \end{itemize}
-\section{Analyse en composantes principales}
 \subsection{La presse}
 Le but de cette analyse est de déterminer ce qui a influencé la presse à donner une note ou une autre à un
 certain film. Afin d'avoir des résultats aussi précis que possible nous allons nous limiter aux grandes presses
